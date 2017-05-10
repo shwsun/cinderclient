@@ -766,7 +766,10 @@ class OpenStackCinderShell(object):
                                endpoint_api_version)
 
         profile = osprofiler_profiler and options.profile
-        if profile:
+        # NOTE(jethro): options.profile demonstrate the --profile, here set to
+        # be true by default
+        #if profile:
+        if osprofiler_profiler:
             osprofiler_profiler.init(options.profile)
 
         try:
