@@ -62,6 +62,18 @@ HINT_HELP_MSG = (" [hint: use '--os-volume-api-version' flag to show help "
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 
+# -------------------------------------------------
+# NOTE(jethro): below are a little things I stuffed
+# -------------------------------------------------
+import random
+
+def is_sampled(rate):
+    MAX_RANGE = 100
+    if random.randint(0, 100) < MAX_RANGE * rate:
+        return True
+    return False
+
+SAMPLING_RATE = 0.5
 
 class CinderClientArgumentParser(argparse.ArgumentParser):
 
@@ -766,10 +778,13 @@ class OpenStackCinderShell(object):
                                endpoint_api_version)
 
         profile = osprofiler_profiler and options.profile
+        print("profile")
+        print(profile)
         # NOTE(jethro): options.profile demonstrate the --profile, here set to
         # be true by default
         #if profile:
-        if osprofiler_profiler:
+        if osprofiler_profiler and is_sampled(SAMPLING_RATE):
+            print("sampled request")
             osprofiler_profiler.init(options.profile)
 
         try:
