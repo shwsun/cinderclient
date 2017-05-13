@@ -777,12 +777,12 @@ class OpenStackCinderShell(object):
                                "to the default API version: %s" %
                                endpoint_api_version)
 
-        profile = osprofiler_profiler and options.profile
-        print("profile")
-        print(profile)
+        #profile = osprofiler_profiler and options.profile
+        #if profile:
+
         # NOTE(jethro): options.profile demonstrate the --profile, here set to
         # be true by default
-        #if profile:
+        profile = "123"
         if osprofiler_profiler and is_sampled(SAMPLING_RATE):
             print("sampled request")
             osprofiler_profiler.init(options.profile)
@@ -790,11 +790,13 @@ class OpenStackCinderShell(object):
         try:
             args.func(self.cs, args)
         finally:
-            if profile:
+            try:
                 trace_id = osprofiler_profiler.get().get_base_id()
                 print("Trace ID: %s" % trace_id)
                 print("To display trace use next command:\n"
                       "osprofiler trace show --html %s " % trace_id)
+            except:
+                pass
 
     def _run_extension_hooks(self, hook_type, *args, **kwargs):
         """Runs hooks for all registered extensions."""
