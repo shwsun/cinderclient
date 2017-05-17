@@ -766,6 +766,9 @@ class OpenStackCinderShell(object):
                                endpoint_api_version)
 
         profile = osprofiler_profiler and options.profile
+        print("DEBUG: ...")
+        print(osprofiler_profiler)
+        print(options)
         if profile:
             osprofiler_profiler.init(options.profile)
 
