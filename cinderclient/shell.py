@@ -66,6 +66,8 @@ logger = logging.getLogger(__name__)
 # NOTE(jethro): below are a little things I stuffed
 # -------------------------------------------------
 import random
+import subprocess
+
 
 def is_sampled(rate):
     MAX_RANGE = 100
@@ -777,13 +779,12 @@ class OpenStackCinderShell(object):
                                "to the default API version: %s" %
                                endpoint_api_version)
 
-        #profile = osprofiler_profiler and options.profile
-        #if profile:
 
         # NOTE(jethro): options.profile demonstrate the --profile, here set to
         # be true by default
-        profile = "123"
-        if osprofiler_profiler and is_sampled(SAMPLING_RATE):
+        options.profile = "123"
+        profile = osprofiler_profiler and options.profile
+        if profile and is_sampled(SAMPLING_RATE):
             print("sampled request")
             osprofiler_profiler.init(options.profile)
 
@@ -793,10 +794,16 @@ class OpenStackCinderShell(object):
             try:
                 trace_id = osprofiler_profiler.get().get_base_id()
                 print("Trace ID: %s" % trace_id)
-                print("To display trace use next command:\n"
-                      "osprofiler trace show --html %s " % trace_id)
+                #print("To display trace use next command:\n"
+                #      "osprofiler trace show --html %s " % trace_id)
+                print("Traces are dumped into /home/centos/traces")
+                cmd = "source /root/keystonerc_admin ; osprofiler trace show" + \
+                    " --dot " + trace_id + " --out " + "/home/centos/traces/" + \
+                    str(trace_id) + ".dot" + " --connection-string mongodb://192.168.0.70:27017"
+                subprocess.call(["bash", "-c", cmd])
             except:
                 pass
+
 
     def _run_extension_hooks(self, hook_type, *args, **kwargs):
         """Runs hooks for all registered extensions."""
