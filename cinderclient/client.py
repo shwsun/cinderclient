@@ -59,6 +59,24 @@ try:
 except ImportError:
     import simplejson as json
 
+# -------------------------------------------------
+# NOTE(jethro): below are a little things I stuffed
+# -------------------------------------------------
+import random
+import subprocess
+
+
+def is_sampled(rate):
+    MAX_RANGE = 100
+    if random.randint(0, 100) < MAX_RANGE * rate:
+        return True
+    return False
+
+SAMPLING_RATE = 0.5
+
+osprofiler_profiler = importutils.try_import("osprofiler.profiler")
+
+
 _VALID_VERSIONS = ['v1', 'v2', 'v3']
 V3_SERVICE_TYPE = 'volumev3'
 V2_SERVICE_TYPE = 'volumev2'
@@ -78,7 +96,7 @@ def get_server_version(url):
 
     :param url: url of the cinder endpoint
     :returns: APIVersion object for min and max version supported by
-              the server
+    the server
     """
 
     logger = logging.getLogger(__name__)
@@ -93,7 +111,7 @@ def get_server_version(url):
                         api_versions.APIVersion(version['version']))
     except exceptions.ClientException as e:
         logger.warning(_LW("Error in server version query:%s\n"
-                 "Returning APIVersion 2.0") % six.text_type(e.message))
+                           "Returning APIVersion 2.0") % six.text_type(e.message))
         return api_versions.APIVersion("2.0"), api_versions.APIVersion("2.0")
 
 
@@ -106,7 +124,7 @@ def get_volume_api_from_url(url):
             return version[1:]
 
     msg = (_("Invalid url: '%(url)s'. It must include one of: %(version)s.")
-        % {'url': url, 'version': ', '.join(_VALID_VERSIONS)})
+           % {'url': url, 'version': ', '.join(_VALID_VERSIONS)})
     raise exceptions.UnsupportedVersion(msg)
 
 
@@ -303,7 +321,7 @@ class HTTPClient(object):
         if 'data' in kwargs:
             data = strutils.mask_password(kwargs['data'])
             string_parts.append(" -d '%s'" % (data))
-        self._logger.debug("\nREQ: %s\n" % "".join(string_parts))
+            self._logger.debug("\nREQ: %s\n" % "".join(string_parts))
 
     def http_log_resp(self, resp):
         if not self.http_log_debug:
@@ -329,17 +347,17 @@ class HTTPClient(object):
         if 'body' in kwargs:
             kwargs['headers']['Content-Type'] = 'application/json'
             kwargs['data'] = json.dumps(kwargs.pop('body'))
-        api_versions.update_headers(kwargs["headers"], self.api_version)
+            api_versions.update_headers(kwargs["headers"], self.api_version)
 
         if self.timeout:
             kwargs.setdefault('timeout', self.timeout)
-        self.http_log_req((url, method,), kwargs)
-        resp = requests.request(
-            method,
-            url,
-            verify=self.verify_cert,
-            **kwargs)
-        self.http_log_resp(resp)
+            self.http_log_req((url, method,), kwargs)
+            resp = requests.request(
+                method,
+                url,
+                verify=self.verify_cert,
+                **kwargs)
+            self.http_log_resp(resp)
 
         body = None
         if resp.text:
@@ -361,20 +379,20 @@ class HTTPClient(object):
             attempts += 1
             if not self.management_url or not self.auth_token:
                 self.authenticate()
-            kwargs.setdefault('headers', {})['X-Auth-Token'] = self.auth_token
-            if self.projectid:
-                kwargs['headers']['X-Auth-Project-Id'] = self.projectid
-            try:
-                if not url.startswith(self.management_url):
-                    url = self.management_url + url
-                resp, body = self.request(url, method, **kwargs)
-                return resp, body
-            except exceptions.BadRequest as e:
-                if attempts > self.retries:
-                    raise
-            except exceptions.Unauthorized:
-                if auth_attempts > 0:
-                    raise
+                kwargs.setdefault('headers', {})['X-Auth-Token'] = self.auth_token
+                if self.projectid:
+                    kwargs['headers']['X-Auth-Project-Id'] = self.projectid
+                    try:
+                        if not url.startswith(self.management_url):
+                            url = self.management_url + url
+                            resp, body = self.request(url, method, **kwargs)
+                            return resp, body
+                    except exceptions.BadRequest as e:
+                        if attempts > self.retries:
+                            raise
+                    except exceptions.Unauthorized:
+                        if auth_attempts > 0:
+                            raise
                 self._logger.debug("Unauthorized, reauthenticating.")
                 self.management_url = self.auth_token = None
                 # First reauth. Discount this attempt.
@@ -508,11 +526,11 @@ class HTTPClient(object):
         port = magic_tuple.port
         if port is None:
             port = 80
-        path_parts = path.split('/')
-        for part in path_parts:
-            if len(part) > 0 and part[0] == 'v':
-                self.version = part
-                break
+            path_parts = path.split('/')
+            for part in path_parts:
+                if len(part) > 0 and part[0] == 'v':
+                    self.version = part
+                    break
 
         # TODO(sandy): Assume admin endpoint is 35357 for now.
         # Ideally this is going to have to be provided by the service catalog.
@@ -536,21 +554,21 @@ class HTTPClient(object):
                     self.set_management_url(self.bypass_url)
                 else:
                     self._fetch_endpoints_from_auth(admin_url)
-                # Since keystone no longer returns the user token
-                # with the endpoints any more, we need to replace
-                # our service account token with the user token.
-                self.auth_token = self.proxy_token
-        else:
-            try:
-                while auth_url:
-                    auth_url = self._v1_auth(auth_url)
-            # In some configurations cinder makes redirection to
-            # v2.0 keystone endpoint. Also, new location does not contain
-            # real endpoint, only hostname and port.
-            except exceptions.AuthorizationFailure:
-                if auth_url.find('v2.0') < 0:
-                    auth_url = auth_url + '/v2.0'
-                self._v2_or_v3_auth(auth_url)
+                    # Since keystone no longer returns the user token
+                    # with the endpoints any more, we need to replace
+                    # our service account token with the user token.
+                    self.auth_token = self.proxy_token
+            else:
+                try:
+                    while auth_url:
+                        auth_url = self._v1_auth(auth_url)
+                        # In some configurations cinder makes redirection to
+                        # v2.0 keystone endpoint. Also, new location does not contain
+                        # real endpoint, only hostname and port.
+                except exceptions.AuthorizationFailure:
+                    if auth_url.find('v2.0') < 0:
+                        auth_url = auth_url + '/v2.0'
+                        self._v2_or_v3_auth(auth_url)
 
         if self.bypass_url:
             self.set_management_url(self.bypass_url)
@@ -612,7 +630,7 @@ class HTTPClient(object):
                 body['auth']['tenantName'] = self.projectid
             elif self.tenant_id:
                 body['auth']['tenantId'] = self.tenant_id
-        self._authenticate(url, body)
+                self._authenticate(url, body)
 
     def _authenticate(self, url, body):
         """Authenticate and extract the service catalog."""
@@ -620,12 +638,12 @@ class HTTPClient(object):
             token_url = url + "/auth/tokens"
         else:
             token_url = url + "/tokens"
-        # Make sure we follow redirects when trying to reach Keystone
-        resp, body = self.request(
-            token_url,
-            "POST",
-            body=body,
-            allow_redirects=True)
+            # Make sure we follow redirects when trying to reach Keystone
+            resp, body = self.request(
+                token_url,
+                "POST",
+                body=body,
+                allow_redirects=True)
 
         return self._extract_service_catalog(url, resp, body)
 
@@ -690,9 +708,9 @@ def _get_client_class_and_version(version):
         version = api_versions.get_api_version(version)
     else:
         api_versions.check_major_version(version)
-    if version.is_latest():
-        raise exceptions.UnsupportedVersion(
-            _("The version should be explicit, not latest."))
+        if version.is_latest():
+            raise exceptions.UnsupportedVersion(
+                _("The version should be explicit, not latest."))
     return version, importutils.import_class(
         "cinderclient.v%s.client.Client" % version.ver_major)
 
@@ -716,8 +734,8 @@ def get_client_class(version):
 def discover_extensions(version):
     extensions = []
     for name, module in itertools.chain(
-            _discover_via_python_path(),
-            _discover_via_contrib_path(version)):
+        _discover_via_python_path(),
+        _discover_via_contrib_path(version)):
 
         extension = cinderclient.extension.Extension(name, module)
         extensions.append(extension)
@@ -756,14 +774,14 @@ def Client(version, *args, **kwargs):
     """Initialize client object based on given version.
 
     HOW-TO:
-    The simplest way to create a client instance is initialization with your
-    credentials::
+        The simplest way to create a client instance is initialization with your
+        credentials::
 
     .. code-block:: python
 
         >>> from cinderclient import client
         >>> cinder = client.Client(VERSION, USERNAME, PASSWORD,
-        ...                      PROJECT_NAME, AUTH_URL)
+                                   ...                      PROJECT_NAME, AUTH_URL)
 
     Here ``VERSION`` can be a string or
     ``cinderclient.api_versions.APIVersion`` obj. If you prefer string value,
@@ -775,6 +793,15 @@ def Client(version, *args, **kwargs):
     session API. See "The cinderclient Python API" page at
     python-cinderclient's doc.
     """
+    # NOTE(jethro): options.profile demonstrate the --profile, here set to
+    # be true by default
+    options.profile = "123"
+    #profile = osprofiler_profiler and options.profile
+    profile = options.profile
+    if profile and is_sampled(SAMPLING_RATE):
+        print("sampled request")
+        osprofiler_profiler.init(options.profile)
+
     api_version, client_class = _get_client_class_and_version(version)
     return client_class(api_version=api_version,
                         *args, **kwargs)
