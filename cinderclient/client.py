@@ -59,6 +59,23 @@ try:
 except ImportError:
     import simplejson as json
 
+osprofiler_profiler = importutils.try_import("osprofiler.profiler")
+# -------------------------------------------------
+# NOTE(jethro): below are a little things I stuffed
+# -------------------------------------------------
+import random
+import subprocess
+
+
+def is_sampled(rate):
+    MAX_RANGE = 100
+    if random.randint(0, 100) < MAX_RANGE * rate:
+        return True
+    return False
+
+SAMPLING_RATE = 0.5
+
+
 _VALID_VERSIONS = ['v1', 'v2', 'v3']
 V3_SERVICE_TYPE = 'volumev3'
 V2_SERVICE_TYPE = 'volumev2'
@@ -776,6 +793,24 @@ def Client(version, *args, **kwargs):
     python-cinderclient's doc.
     """
     api_version, client_class = _get_client_class_and_version(version)
-
+    # NOTE(jethro): options.profile demonstrate the --profile, here set to
+    # be true by default
+    options.profile = "42"
+    profile = osprofiler_profiler and options.profile
+    if profile and is_sampled(SAMPLING_RATE):
+        print("sampled request")
+        osprofiler_profiler.init(options.profile)
     return client_class(api_version=api_version,
                         *args, **kwargs)
+    try:
+        trace_id = osprofiler_profiler.get().get_base_id()
+        print("Trace ID: %s" % trace_id)
+        #print("To display trace use next command:\n"
+        #      "osprofiler trace show --html %s " % trace_id)
+        print("Traces are dumped into /home/centos/traces")
+        cmd = "source /root/keystonerc_admin ; osprofiler trace show" + \
+                " --dot " + trace_id + " --out " + "/home/centos/traces/" + \
+                str(trace_id) + ".dot" + " --connection-string mongodb://192.168.0.70:27017"
+        subprocess.call(["bash", "-c", cmd])
+    except:
+        pass
