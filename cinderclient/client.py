@@ -795,11 +795,10 @@ def Client(version, *args, **kwargs):
     api_version, client_class = _get_client_class_and_version(version)
     # NOTE(jethro): options.profile demonstrate the --profile, here set to
     # be true by default
-    options.profile = "42"
-    profile = options.profile
+    profile = "42"  #options.profile
     if profile and is_sampled(SAMPLING_RATE):
         print("sampled request")
-        osprofiler_profiler.init(options.profile)
+        osprofiler_profiler.init(profile)
     return client_class(api_version=api_version,
                         *args, **kwargs)
     """
