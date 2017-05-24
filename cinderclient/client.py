@@ -796,12 +796,13 @@ def Client(version, *args, **kwargs):
     # NOTE(jethro): options.profile demonstrate the --profile, here set to
     # be true by default
     options.profile = "42"
-    profile = osprofiler_profiler and options.profile
+    profile = options.profile
     if profile and is_sampled(SAMPLING_RATE):
         print("sampled request")
         osprofiler_profiler.init(options.profile)
     return client_class(api_version=api_version,
                         *args, **kwargs)
+    """
     try:
         trace_id = osprofiler_profiler.get().get_base_id()
         print("Trace ID: %s" % trace_id)
@@ -814,3 +815,4 @@ def Client(version, *args, **kwargs):
         subprocess.call(["bash", "-c", cmd])
     except:
         pass
+    """

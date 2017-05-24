@@ -782,12 +782,6 @@ class OpenStackCinderShell(object):
 
         # NOTE(jethro): options.profile demonstrate the --profile, here set to
         # be true by default
-        options.profile = "123"
-        profile = osprofiler_profiler and options.profile
-        if profile and is_sampled(SAMPLING_RATE):
-            print("sampled request")
-            osprofiler_profiler.init(options.profile)
-
         try:
             args.func(self.cs, args)
         finally:
@@ -796,10 +790,10 @@ class OpenStackCinderShell(object):
                 print("Trace ID: %s" % trace_id)
                 #print("To display trace use next command:\n"
                 #      "osprofiler trace show --html %s " % trace_id)
-                print("Traces are dumped into /home/centos/traces")
+                print("Traces are dumped into /home/admin/traces")
                 cmd = "source /root/keystonerc_admin ; osprofiler trace show" + \
-                    " --dot " + trace_id + " --out " + "/home/centos/traces/" + \
-                    str(trace_id) + ".dot" + " --connection-string mongodb://192.168.0.70:27017"
+                    " --dot " + trace_id + " --out " + "/home/admin/traces/" + \
+                    str(trace_id) + ".dot" + " --connection-string mongodb://172.16.10.190:27017"
                 subprocess.call(["bash", "-c", cmd])
             except:
                 pass
