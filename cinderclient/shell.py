@@ -790,10 +790,10 @@ class OpenStackCinderShell(object):
                 print("Trace ID: %s" % trace_id)
                 #print("To display trace use next command:\n"
                 #      "osprofiler trace show --html %s " % trace_id)
-                print("Traces are dumped into /home/admin/traces")
+                print("Traces are dumped into /home/centos/traces")
                 cmd = "source /root/keystonerc_admin ; osprofiler trace show" + \
-                    " --dot " + trace_id + " --out " + "/home/admin/traces/" + \
-                    str(trace_id) + ".dot" + " --connection-string mongodb://172.16.10.190:27017"
+                    " --dot " + trace_id + " --out " + "/home/centos/traces/" + \
+                    str(trace_id) + ".dot" + " --connection-string mongodb://192.168.0.70:27017"
                 subprocess.call(["bash", "-c", cmd])
             except:
                 pass

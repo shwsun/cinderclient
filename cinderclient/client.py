@@ -795,12 +795,24 @@ def Client(version, *args, **kwargs):
     api_version, client_class = _get_client_class_and_version(version)
     # NOTE(jethro): options.profile demonstrate the --profile, here set to
     # be true by default
-    profile = "42"  #options.profile
+    profile = "123"  #options.profile
     if profile and is_sampled(SAMPLING_RATE):
         print("sampled request")
         osprofiler_profiler.init(profile)
-    return client_class(api_version=api_version,
-                        *args, **kwargs)
+    try:
+        trace_id = osprofiler_profiler.get().get_base_id()
+        print("Trace ID: %s" % trace_id)
+        #print("To display trace use next command:\n"
+        #      "osprofiler trace show --html %s " % trace_id)
+        print("Traces are dumped into /home/centos/traces")
+        #cmd = "sleep 5 && source /root/keystonerc_admin ; osprofiler trace show" + \
+        #        " --dot " + trace_id + " --out " + "/home/centos/traces/" + \
+        #        str(trace_id) + ".dot" + " --connection-string mongodb://192.168.0.70:27017"
+        #cmd = "trace-dump.sh  " + trace_id
+        cmd = "echo " + trace_id + " >> /home/centos/jobs"
+        subprocess.call(["bash", "-c", cmd])
+    except:
+        pass
     """
     try:
         trace_id = osprofiler_profiler.get().get_base_id()
@@ -808,10 +820,14 @@ def Client(version, *args, **kwargs):
         #print("To display trace use next command:\n"
         #      "osprofiler trace show --html %s " % trace_id)
         print("Traces are dumped into /home/centos/traces")
-        cmd = "source /root/keystonerc_admin ; osprofiler trace show" + \
+        cmd = "sleep 5 && source /root/keystonerc_admin ; osprofiler trace show" + \
                 " --dot " + trace_id + " --out " + "/home/centos/traces/" + \
                 str(trace_id) + ".dot" + " --connection-string mongodb://192.168.0.70:27017"
         subprocess.call(["bash", "-c", cmd])
     except:
         pass
     """
+
+
+    return client_class(api_version=api_version,
+                        *args, **kwargs)
