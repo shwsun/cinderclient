@@ -802,32 +802,11 @@ def Client(version, *args, **kwargs):
     try:
         trace_id = osprofiler_profiler.get().get_base_id()
         print("Trace ID: %s" % trace_id)
-        #print("To display trace use next command:\n"
-        #      "osprofiler trace show --html %s " % trace_id)
         print("Traces are dumped into /home/centos/traces")
-        #cmd = "sleep 5 && source /root/keystonerc_admin ; osprofiler trace show" + \
-        #        " --dot " + trace_id + " --out " + "/home/centos/traces/" + \
-        #        str(trace_id) + ".dot" + " --connection-string mongodb://192.168.0.70:27017"
-        #cmd = "trace-dump.sh  " + trace_id
-        cmd = "echo " + trace_id + " >> /home/centos/jobs"
+        cmd = "echo " + trace_id + " >> /home/centos/cinder-jobs"
         subprocess.call(["bash", "-c", cmd])
     except:
         pass
-    """
-    try:
-        trace_id = osprofiler_profiler.get().get_base_id()
-        print("Trace ID: %s" % trace_id)
-        #print("To display trace use next command:\n"
-        #      "osprofiler trace show --html %s " % trace_id)
-        print("Traces are dumped into /home/centos/traces")
-        cmd = "sleep 5 && source /root/keystonerc_admin ; osprofiler trace show" + \
-                " --dot " + trace_id + " --out " + "/home/centos/traces/" + \
-                str(trace_id) + ".dot" + " --connection-string mongodb://192.168.0.70:27017"
-        subprocess.call(["bash", "-c", cmd])
-    except:
-        pass
-    """
-
 
     return client_class(api_version=api_version,
                         *args, **kwargs)
